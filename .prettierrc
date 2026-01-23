@@ -1,0 +1,14 @@
+{
+    "tabWidth": 4,
+    "plugins": ["prettier-plugin-blade"],
+    "printWidth": 800,
+    "overrides": [
+        {
+            "files": ["*.blade.php"],
+            "options": {
+                "parser": "blade",
+                "tabWidth": 4
+            }
+        }
+    ]
+}
