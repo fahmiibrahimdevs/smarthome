@@ -1,4 +1,95 @@
-<div>
+<div x-data="mqttConnection()" x-init="init()" x-cloak>
+    <!-- MQTT Connection Modal -->
+    <template x-if="showModal">
+        <div class="tw-fixed tw-inset-0 tw-z-[9999] tw-flex tw-items-center tw-justify-center tw-bg-gray-900/60 tw-backdrop-blur-sm tw-p-4">
+            <div class="tw-bg-white tw-rounded-2xl tw-shadow-2xl tw-w-full tw-max-w-sm tw-overflow-hidden">
+                <!-- Header -->
+                <div class="tw-bg-gradient-to-br tw-from-blue-500 tw-to-indigo-600 tw-px-5 tw-py-4">
+                    <div class="tw-flex tw-items-center tw-space-x-3">
+                        <div class="tw-w-10 tw-h-10 tw-rounded-lg tw-bg-white/20 tw-flex tw-items-center tw-justify-center">
+                            <i class="fas fa-wifi tw-text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="tw-text-white tw-font-semibold tw-m-0">Koneksi MQTT</h3>
+                            <p class="tw-text-blue-100 tw-text-xs tw-m-0 tw-opacity-80">Broker WebSocket</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="tw-p-5 tw-space-y-4">
+                    <!-- Hostname & Port Row -->
+                    <div class="tw-grid tw-grid-cols-3 tw-gap-3">
+                        <div class="tw-col-span-2">
+                            <label class="tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Host</label>
+                            <input type="text" x-model="mqtt.hostname" placeholder="192.168.1.1" class="tw-mt-1 tw-w-full tw-px-3 tw-py-2 tw-bg-gray-50 tw-border tw-border-gray-200 tw-rounded-lg tw-text-sm tw-text-gray-800 placeholder:tw-text-gray-400 focus:tw-bg-white focus:tw-border-blue-400 focus:tw-ring-2 focus:tw-ring-blue-100 tw-outline-none tw-transition-all" />
+                        </div>
+                        <div>
+                            <label class="tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Port</label>
+                            <input type="number" x-model="mqtt.port" placeholder="9001" class="tw-mt-1 tw-w-full tw-px-3 tw-py-2 tw-bg-gray-50 tw-border tw-border-gray-200 tw-rounded-lg tw-text-sm tw-text-gray-800 placeholder:tw-text-gray-400 focus:tw-bg-white focus:tw-border-blue-400 focus:tw-ring-2 focus:tw-ring-blue-100 tw-outline-none tw-transition-all" />
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                        <label class="tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Username</label>
+                        <input type="text" x-model="mqtt.username" placeholder="optional" class="tw-mt-1 tw-w-full tw-px-3 tw-py-2 tw-bg-gray-50 tw-border tw-border-gray-200 tw-rounded-lg tw-text-sm tw-text-gray-800 placeholder:tw-text-gray-400 focus:tw-bg-white focus:tw-border-blue-400 focus:tw-ring-2 focus:tw-ring-blue-100 tw-outline-none tw-transition-all" />
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Password</label>
+                        <div class="tw-relative tw-mt-1">
+                            <input :type="showPassword ? 'text' : 'password'" x-model="mqtt.password" placeholder="optional" class="tw-w-full tw-px-3 tw-py-2 tw-pr-10 tw-bg-gray-50 tw-border tw-border-gray-200 tw-rounded-lg tw-text-sm tw-text-gray-800 placeholder:tw-text-gray-400 focus:tw-bg-white focus:tw-border-blue-400 focus:tw-ring-2 focus:tw-ring-blue-100 tw-outline-none tw-transition-all" />
+                            <button type="button" @click="showPassword = !showPassword" class="tw-absolute tw-right-3 tw-top-1/2 -tw-translate-y-1/2 tw-text-gray-400 hover:tw-text-gray-600 tw-transition-colors">
+                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'" class="tw-text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <label class="tw-flex tw-items-center tw-space-x-2 tw-cursor-pointer tw-select-none">
+                        <input type="checkbox" x-model="saveCredentials" class="tw-w-4 tw-h-4 tw-rounded tw-border-gray-300 tw-text-blue-500 focus:tw-ring-blue-400" />
+                        <span class="tw-text-sm tw-text-gray-600">Ingat kredensial</span>
+                    </label>
+
+                    <!-- Error Message -->
+                    <template x-if="connectionStatus === 'error'">
+                        <div class="tw-flex tw-items-center tw-space-x-2 tw-text-red-600 tw-bg-red-50 tw-px-3 tw-py-2 tw-rounded-lg tw-text-sm">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span x-text="errorMessage"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Footer -->
+                <div class="tw-px-5 tw-py-4 tw-bg-gray-50 tw-border-t tw-border-gray-100 tw-flex tw-items-center tw-justify-between">
+                    <button @click="clearSavedCredentials()" class="tw-text-xs tw-text-gray-400 hover:tw-text-red-500 tw-transition-colors">
+                        <i class="fas fa-eraser tw-mr-1"></i>
+                        Reset
+                    </button>
+                    <button @click="connect()" :disabled="connectionStatus === 'connecting'" class="tw-px-5 tw-py-2 tw-bg-gradient-to-r tw-from-blue-500 tw-to-indigo-600 tw-text-white tw-font-medium tw-rounded-lg tw-text-sm hover:tw-from-blue-600 hover:tw-to-indigo-700 tw-transition-all tw-shadow-md hover:tw-shadow-lg disabled:tw-opacity-60 disabled:tw-cursor-wait tw-flex tw-items-center tw-space-x-2">
+                        <template x-if="connectionStatus === 'connecting'">
+                            <i class="fas fa-circle-notch tw-animate-spin"></i>
+                        </template>
+                        <template x-if="connectionStatus === 'connected'">
+                            <i class="fas fa-check"></i>
+                        </template>
+                        <template x-if="connectionStatus !== 'connecting' && connectionStatus !== 'connected'">
+                            <i class="fas fa-plug"></i>
+                        </template>
+                        <span x-text="
+                            connectionStatus === 'connecting'
+                                ? 'Connecting...'
+                                : connectionStatus === 'connected'
+                                  ? 'Connected!'
+                                  : 'Connect'
+                        "></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
     <section class="section custom-section">
         <div class="section-header">
             <h1>Dashboard</h1>
@@ -743,6 +834,11 @@
 
 @push("general-css")
     <link rel="stylesheet" href="{{ asset("assets/midragon/select2/select2.min.css") }}" />
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
 @endpush
 
 @push("scripts")
@@ -798,5 +894,175 @@
                 $('#selectRuang').select2('destroy');
             });
         });
+    </script>
+
+    <!-- Paho MQTT Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
+
+    <!-- MQTT Connection Alpine.js Component -->
+    <script>
+        // Global MQTT client
+        window.mqttClient = null;
+
+        function mqttConnection() {
+            return {
+                showModal: true,
+                showPassword: false,
+                saveCredentials: true,
+                connectionStatus: 'idle', // idle, connecting, connected, error
+                errorMessage: '',
+                isConnected: false,
+                mqtt: {
+                    hostname: '',
+                    port: 9001, // WebSocket port (usually 9001 or 8083)
+                    username: '',
+                    password: '',
+                },
+
+                init() {
+                    // Load saved credentials from localStorage
+                    const saved = localStorage.getItem('mqttCredentials');
+                    if (saved) {
+                        try {
+                            const creds = JSON.parse(saved);
+                            this.mqtt = { ...this.mqtt, ...creds };
+                            this.saveCredentials = true;
+                            // Only load credentials, don't auto-connect
+                            // User must press "Hubungkan" button
+                        } catch (e) {
+                            console.error('Failed to parse saved MQTT credentials');
+                        }
+                    }
+                },
+
+                connect() {
+                    // Validate fields
+                    if (!this.mqtt.hostname) {
+                        this.connectionStatus = 'error';
+                        this.errorMessage = 'Hostname tidak boleh kosong';
+                        return;
+                    }
+
+                    this.connectionStatus = 'connecting';
+
+                    try {
+                        // Create a unique client ID
+                        const clientId = 'smarthome_' + Math.random().toString(16).substr(2, 8);
+
+                        // Create MQTT client (WebSocket connection)
+                        mqttClient = new Paho.Client(this.mqtt.hostname, parseInt(this.mqtt.port), clientId);
+
+                        // Set callback handlers
+                        mqttClient.onConnectionLost = (responseObject) => {
+                            this.isConnected = false;
+                            this.connectionStatus = 'error';
+                            this.errorMessage = 'Koneksi terputus: ' + responseObject.errorMessage;
+                            console.log('MQTT Connection lost:', responseObject.errorMessage);
+                        };
+
+                        window.mqttDeviceStates = window.mqttDeviceStates || {};
+
+                        mqttClient.onMessageArrived = (message) => {
+                            console.log('MQTT Message received:', message.destinationName, message.payloadString);
+
+                            // Cache the state globally
+                            window.mqttDeviceStates[message.destinationName] = message.payloadString;
+
+                            // Dispatch event for other components to listen
+                            window.dispatchEvent(
+                                new CustomEvent('mqtt-message', {
+                                    detail: {
+                                        topic: message.destinationName,
+                                        payload: message.payloadString,
+                                    },
+                                }),
+                            );
+                        };
+
+                        // Connect options
+                        const connectOptions = {
+                            onSuccess: () => {
+                                console.log('MQTT Connected successfully!');
+                                this.isConnected = true;
+                                this.connectionStatus = 'connected';
+
+                                // Save credentials if checkbox is checked
+                                if (this.saveCredentials) {
+                                    localStorage.setItem('mqttCredentials', JSON.stringify(this.mqtt));
+                                }
+
+                                // Close modal after successful connection
+                                setTimeout(() => {
+                                    this.showModal = false;
+                                }, 1000);
+
+                                // Subscribe to smarthome topics
+                                mqttClient.subscribe('smarthome/#');
+                                console.log('Subscribed to smarthome/#');
+                            },
+                            onFailure: (error) => {
+                                console.error('MQTT Connection failed:', error);
+                                this.isConnected = false;
+                                this.connectionStatus = 'error';
+                                this.errorMessage = 'Gagal terhubung: ' + (error.errorMessage || 'Periksa hostname dan port');
+                            },
+                            timeout: 10,
+                            useSSL: false,
+                        };
+
+                        // Add authentication if provided
+                        if (this.mqtt.username) {
+                            connectOptions.userName = this.mqtt.username;
+                        }
+                        if (this.mqtt.password) {
+                            connectOptions.password = this.mqtt.password;
+                        }
+
+                        // Connect
+                        mqttClient.connect(connectOptions);
+                    } catch (error) {
+                        console.error('MQTT Error:', error);
+                        this.connectionStatus = 'error';
+                        this.errorMessage = 'Error: ' + error.message;
+                    }
+                },
+
+                disconnect() {
+                    if (mqttClient && this.isConnected) {
+                        mqttClient.disconnect();
+                        this.isConnected = false;
+                        this.connectionStatus = 'idle';
+                        console.log('MQTT Disconnected');
+                    }
+                },
+
+                publish(topic, message) {
+                    if (mqttClient && this.isConnected) {
+                        const mqttMessage = new Paho.Message(message);
+                        mqttMessage.destinationName = topic;
+                        mqttClient.send(mqttMessage);
+                        console.log('MQTT Published:', topic, message);
+                    }
+                },
+
+                clearSavedCredentials() {
+                    localStorage.removeItem('mqttCredentials');
+                    this.disconnect();
+                    this.mqtt = {
+                        hostname: '',
+                        port: 9001,
+                        username: '',
+                        password: '',
+                    };
+                    this.saveCredentials = true;
+                    this.connectionStatus = 'idle';
+                    this.errorMessage = '';
+                },
+
+                openModal() {
+                    this.showModal = true;
+                },
+            };
+        }
     </script>
 @endpush

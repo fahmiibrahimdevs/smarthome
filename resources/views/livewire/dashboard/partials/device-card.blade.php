@@ -1,5 +1,43 @@
 <div
-    x-data="{ isOn: false, showMenu: false }"
+    x-data="{
+        isOn: false,
+        showMenu: false,
+        init() {
+            // Restore state from global cache if available
+            @if ($device->power_topic)
+                if
+                (window.mqttDeviceStates
+                &&
+                window.mqttDeviceStates['{{ $device->power_topic }}'])
+                {
+                const
+                payload
+                =
+                window.mqttDeviceStates['{{ $device->power_topic }}'];
+                this.isOn
+                =
+                payload
+                ===
+                '{{ $device->power_payload_on ?? "ON" }}';
+                }
+            @endif
+        }
+    }"
+    @mqtt-message.window="
+        @if ($device->power_topic)
+            if
+            ($event.detail.topic
+            ===
+            '{{ $device->power_topic }}')
+            {
+            this.isOn
+            =
+            $event.detail.payload
+            ===
+            '{{ $device->power_payload_on ?? "ON" }}';
+            }
+        @endif
+    "
     data-device-type="{{ $device->tipe }}"
     class="tw-rounded-2xl tw-border tw-overflow-hidden tw-transition-all tw-duration-500 tw-ease-out tw-relative"
     :class="isOn
@@ -25,7 +63,41 @@
             <div class="tw-flex tw-items-center tw-space-x-1">
                 @if ($device->tipe === "onoff")
                     <button
-                        @click="isOn = !isOn"
+                        @click="isOn = !isOn;
+                            @if ($device->power_topic)
+                                if
+                                (window.mqttClient
+                                &&
+                                window.mqttClient.isConnected())
+                                {
+                                const
+                                payload
+                                =
+                                isOn
+                                ?
+                                '{{ $device->power_payload_on ?? "ON" }}'
+                                : '{{ $device->power_payload_off ?? "OFF" }}';
+                                const
+                                message
+                                =
+                                new
+                                Paho.Message(payload);
+                                message.destinationName
+                                =
+                                '{{ $device->power_topic }}';
+                                @if ($device->power_retain)
+                                    message.retained
+                                    =
+                                    true;
+                                @endif
+
+                                window.mqttClient.send(message);
+                                console.log('Published',
+                                '{{ $device->power_topic }}',
+                                payload);
+                                }
+                            @endif
+                        "
                         class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-transition-all tw-duration-300 tw-border-2 active:tw-scale-90"
                         :class="isOn
                             ? 'tw-bg-white tw-border-white tw-text-blue-600 tw-shadow-lg tw-shadow-white/30'
