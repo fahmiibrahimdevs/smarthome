@@ -131,6 +131,7 @@
                 });
                 $('#formDataModal').modal('hide');
                 $('#formRuanganModal').modal('hide');
+                $('#formDeviceModal').modal('hide');
             });
             window.addEventListener('swal:confirm', (event) => {
                 Swal.fire({
@@ -141,6 +142,21 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         Livewire.dispatch('delete');
+                    }
+                });
+            });
+            window.addEventListener('swal:confirmDevice', (event) => {
+                Swal.fire({
+                    title: event.detail[0].message,
+                    text: event.detail[0].text,
+                    icon: event.detail[0].type,
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Livewire.dispatch('deleteDevice');
                     }
                 });
             });

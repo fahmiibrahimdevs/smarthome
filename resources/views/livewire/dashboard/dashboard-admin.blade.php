@@ -141,231 +141,308 @@
                         @endforeach
                     </div>
                     <div class="tw-px-4 lg:tw-px-0 tw-mt-6 font-bagus">
-                        <!-- AC Remote Section -->
-                        <h3 class="tw-text-base tw-mt-0">Remote</h3>
-                        <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-4 tw-mt-4">
-                            <!-- AC Card -->
-                            <div class="card tw-rounded-xl tw-shadow-sm tw-shadow-gray-200 tw-border tw-border-gray-100" x-data="{ isOn: false, temp: 24, mode: 'cool' }">
-                                <div class="card-body tw-p-5 font-bagus tw-bg-white tw-rounded-xl">
-                                    <!-- Header -->
-                                    <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
-                                        <div class="tw-flex tw-items-center tw-space-x-3">
-                                            <div class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
-                                                <i class="fas fa-wind tw-text-gray-500"></i>
+                        <!-- Nav Pills Device Types (Alpine.js) -->
+                        <div class="tw-mt-6" x-data="{ activeTab: 'power' }" x-init="
+                            $watch('activeTab', (value) => localStorage.setItem('deviceActiveTab', value))
+                            activeTab = localStorage.getItem('deviceActiveTab') || 'power'
+                        ">
+                            <!-- Tab Headers -->
+                            <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                                <ul class="nav nav-pills" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button @click="activeTab = 'power'" class="nav-link" :class="activeTab === 'power' ? 'active' : ''" type="button">
+                                            <i class="fas fa-power-off mr-1"></i>
+                                            Power
+                                            <span class="badge badge-light ml-1">{{ collect($devices)->where("tipe", "onoff")->count() }}</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button @click="activeTab = 'remote'" class="nav-link" :class="activeTab === 'remote' ? 'active' : ''" type="button">
+                                            <i class="fas fa-gamepad mr-1"></i>
+                                            Remote
+                                            <span class="badge badge-light ml-1">{{ collect($devices)->where("tipe", "remote")->count() }}</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button @click="activeTab = 'cctv'" class="nav-link" :class="activeTab === 'cctv' ? 'active' : ''" type="button">
+                                            <i class="fas fa-video mr-1"></i>
+                                            CCTV
+                                            <span class="badge badge-light ml-1">{{ collect($devices)->where("tipe", "cctv")->count() }}</span>
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <!-- Master Toggle for Power -->
+                                @if (collect($devices)->where("tipe", "onoff")->count() > 0)
+                                    <div x-data="{ allOn: false }" id="masterToggle">
+                                        <button
+                                            @click="allOn = !allOn; document.querySelectorAll('[data-device-type=onoff]').forEach(el => { el.__x.$data.isOn = allOn })"
+                                            class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-transition-all tw-duration-300 tw-border-2 active:tw-scale-90"
+                                            :class="allOn
+                                                ? 'tw-bg-green-500 tw-border-green-500 tw-text-white tw-shadow-lg tw-shadow-green-500/30'
+                                                : 'tw-bg-gray-100 tw-border-gray-200 tw-text-gray-400 hover:tw-bg-gray-200'"
+                                            :title="allOn ? 'Matikan Semua' : 'Nyalakan Semua'"
+                                        >
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Tab Contents -->
+                            <div>
+                                <!-- POWER Tab -->
+                                <div x-show="activeTab === 'power'" x-transition>
+                                    <div class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
+                                        @forelse (collect($devices)->where("tipe", "onoff") as $device)
+                                            @include("livewire.dashboard.partials.device-card", ["device" => $device])
+                                        @empty
+                                            <div class="tw-col-span-2 lg:tw-col-span-3 tw-text-center tw-py-12">
+                                                <div class="tw-w-16 tw-h-16 tw-mx-auto tw-rounded-full tw-bg-gray-100 tw-flex tw-items-center tw-justify-center tw-mb-3">
+                                                    <i class="fas fa-power-off tw-text-2xl tw-text-gray-300"></i>
+                                                </div>
+                                                <p class="tw-text-gray-500 tw-m-0">Belum ada perangkat Power</p>
                                             </div>
-                                            <div>
-                                                <p class="tw-font-semibold tw-text-gray-800 tw-m-0">AC Ruang Tamu</p>
-                                                <p class="tw-text-xs tw-text-gray-400 tw-m-0">Daikin Inverter</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <!-- REMOTE Tab -->
+                                <div x-show="activeTab === 'remote'" x-transition>
+                                    <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-4">
+                                        @forelse (collect($devices)->where("tipe", "remote") as $device)
+                                            @if ($device->remote_type === "ac")
+                                                <!-- AC Remote Card -->
+                                                <div class="card tw-rounded-xl tw-shadow-sm tw-shadow-gray-200 tw-border tw-border-gray-100" x-data="{ isOn: false, temp: 24, mode: 'cool' }">
+                                                    <div class="card-body tw-p-5 font-bagus tw-bg-white tw-rounded-xl">
+                                                        <!-- Header -->
+                                                        <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                                                            <div class="tw-flex tw-items-center tw-space-x-3">
+                                                                <div class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
+                                                                    <i class="{{ $device->icon ?: "fas fa-wind" }} tw-text-gray-500"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <p class="tw-font-semibold tw-text-gray-800 tw-m-0">{{ $device->nama_device }}</p>
+                                                                    <p class="tw-text-xs tw-text-gray-400 tw-m-0">Remote AC</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="tw-flex tw-items-center tw-gap-2">
+                                                                <label class="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
+                                                                    <input type="checkbox" class="tw-sr-only tw-peer" x-model="isOn" />
+                                                                    <div class="tw-w-11 tw-h-6 tw-bg-gray-200 peer-focus:tw-outline-none tw-rounded-full tw-peer peer-checked:after:tw-translate-x-full peer-checked:after:tw-border-white after:tw-content-[''] after:tw-absolute after:tw-top-[2px] after:tw-left-[2px] after:tw-bg-white after:tw-border-gray-300 after:tw-border after:tw-rounded-full after:tw-h-5 after:tw-w-5 after:tw-transition-all peer-checked:tw-bg-blue-500"></div>
+                                                                </label>
+                                                                <!-- Menu Button -->
+                                                                <div x-data="{ showMenu: false }" class="tw-relative">
+                                                                    <button @click="showMenu = !showMenu" class="tw-w-8 tw-h-8 tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-100">
+                                                                        <i class="fas fa-ellipsis-v tw-text-xs"></i>
+                                                                    </button>
+                                                                    <div x-show="showMenu" @click.away="showMenu = false" x-transition class="tw-absolute tw-right-0 tw-top-8 tw-bg-white tw-rounded-lg tw-shadow-lg tw-border tw-border-gray-100 tw-py-1 tw-z-10 tw-min-w-[120px]">
+                                                                        <button wire:click="editDevice({{ $device->id }})" @click="showMenu = false" data-toggle="modal" data-target="#formDeviceModal" class="tw-w-full tw-text-left tw-px-3 tw-py-2 tw-text-sm tw-text-gray-600 hover:tw-bg-gray-50 tw-flex tw-items-center">
+                                                                            <i class="far fa-edit tw-mr-2 tw-text-amber-500"></i>
+                                                                            Edit
+                                                                        </button>
+                                                                        <button wire:click="deleteDeviceConfirm({{ $device->id }})" @click="showMenu = false" class="tw-w-full tw-text-left tw-px-3 tw-py-2 tw-text-sm tw-text-red-500 hover:tw-bg-red-50 tw-flex tw-items-center">
+                                                                            <i class="far fa-trash tw-mr-2"></i>
+                                                                            Hapus
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Temperature Display -->
+                                                        <div class="tw-text-center tw-py-6 tw-bg-gray-50 tw-rounded-xl tw-mb-4">
+                                                            <p class="tw-text-5xl tw-font-bold tw-m-0 tw-transition-colors" :class="isOn ? 'tw-text-gray-800' : 'tw-text-gray-300'" x-text="temp + '°C'"></p>
+                                                            <p class="tw-text-sm tw-text-gray-400 tw-m-0 tw-mt-2">Suhu</p>
+                                                        </div>
+
+                                                        <!-- Temperature Controls -->
+                                                        <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                                                            <button @click="temp > 16 ? temp-- : null" :disabled="!isOn" class="tw-w-12 tw-h-12 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-text-xl tw-font-bold tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40 disabled:tw-cursor-not-allowed" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                <i class="fas fa-minus"></i>
+                                                            </button>
+                                                            <div class="tw-flex tw-items-center tw-space-x-1 tw-text-gray-400 tw-text-xs">
+                                                                <span>16°C</span>
+                                                                <div class="tw-w-24 tw-h-1 tw-bg-gray-200 tw-rounded-full tw-mx-2">
+                                                                    <div class="tw-h-full tw-bg-blue-400 tw-rounded-full tw-transition-all" :style="'width: ' + ((temp - 16) / 14 * 100) + '%'"></div>
+                                                                </div>
+                                                                <span>30°C</span>
+                                                            </div>
+                                                            <button @click="temp < 30 ? temp++ : null" :disabled="!isOn" class="tw-w-12 tw-h-12 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-text-xl tw-font-bold tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40 disabled:tw-cursor-not-allowed" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
+
+                                                        <!-- Mode Buttons -->
+                                                        <div class="tw-grid tw-grid-cols-4 tw-gap-2">
+                                                            <button @click="mode = 'cool'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'cool' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
+                                                                <i class="fas fa-snowflake tw-text-lg tw-mb-1"></i>
+                                                                <span class="tw-text-[10px]">Cool</span>
+                                                            </button>
+                                                            <button @click="mode = 'fan'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'fan' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
+                                                                <i class="fas fa-fan tw-text-lg tw-mb-1"></i>
+                                                                <span class="tw-text-[10px]">Fan</span>
+                                                            </button>
+                                                            <button @click="mode = 'dry'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'dry' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
+                                                                <i class="fas fa-droplet tw-text-lg tw-mb-1"></i>
+                                                                <span class="tw-text-[10px]">Dry</span>
+                                                            </button>
+                                                            <button @click="mode = 'auto'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'auto' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
+                                                                <i class="fas fa-rotate tw-text-lg tw-mb-1"></i>
+                                                                <span class="tw-text-[10px]">Auto</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @elseif ($device->remote_type === "tv")
+                                                <!-- TV Remote Card -->
+                                                <div class="card tw-rounded-xl tw-shadow-sm tw-shadow-gray-200 tw-border tw-border-gray-100" x-data="{ isOn: false, volume: 25, channel: 5 }">
+                                                    <div class="card-body tw-p-5 font-bagus tw-bg-white tw-rounded-xl">
+                                                        <!-- Header -->
+                                                        <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                                                            <div class="tw-flex tw-items-center tw-space-x-3">
+                                                                <div class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
+                                                                    <i class="{{ $device->icon ?: "fas fa-tv" }} tw-text-gray-500"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <p class="tw-font-semibold tw-text-gray-800 tw-m-0">{{ $device->nama_device }}</p>
+                                                                    <p class="tw-text-xs tw-text-gray-400 tw-m-0">Remote TV</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="tw-flex tw-items-center tw-gap-2">
+                                                                <label class="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
+                                                                    <input type="checkbox" class="tw-sr-only tw-peer" x-model="isOn" />
+                                                                    <div class="tw-w-11 tw-h-6 tw-bg-gray-200 peer-focus:tw-outline-none tw-rounded-full tw-peer peer-checked:after:tw-translate-x-full peer-checked:after:tw-border-white after:tw-content-[''] after:tw-absolute after:tw-top-[2px] after:tw-left-[2px] after:tw-bg-white after:tw-border-gray-300 after:tw-border after:tw-rounded-full after:tw-h-5 after:tw-w-5 after:tw-transition-all peer-checked:tw-bg-blue-500"></div>
+                                                                </label>
+                                                                <!-- Menu Button -->
+                                                                <div x-data="{ showMenu: false }" class="tw-relative">
+                                                                    <button @click="showMenu = !showMenu" class="tw-w-8 tw-h-8 tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-100">
+                                                                        <i class="fas fa-ellipsis-v tw-text-xs"></i>
+                                                                    </button>
+                                                                    <div x-show="showMenu" @click.away="showMenu = false" x-transition class="tw-absolute tw-right-0 tw-top-8 tw-bg-white tw-rounded-lg tw-shadow-lg tw-border tw-border-gray-100 tw-py-1 tw-z-10 tw-min-w-[120px]">
+                                                                        <button wire:click="editDevice({{ $device->id }})" @click="showMenu = false" data-toggle="modal" data-target="#formDeviceModal" class="tw-w-full tw-text-left tw-px-3 tw-py-2 tw-text-sm tw-text-gray-600 hover:tw-bg-gray-50 tw-flex tw-items-center">
+                                                                            <i class="far fa-edit tw-mr-2 tw-text-amber-500"></i>
+                                                                            Edit
+                                                                        </button>
+                                                                        <button wire:click="deleteDeviceConfirm({{ $device->id }})" @click="showMenu = false" class="tw-w-full tw-text-left tw-px-3 tw-py-2 tw-text-sm tw-text-red-500 hover:tw-bg-red-50 tw-flex tw-items-center">
+                                                                            <i class="far fa-trash tw-mr-2"></i>
+                                                                            Hapus
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Volume & Channel Controls -->
+                                                        <div class="tw-grid tw-grid-cols-2 tw-gap-4 tw-mb-4">
+                                                            <!-- Volume -->
+                                                            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-3">
+                                                                <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mb-2 tw-text-center">Volume</p>
+                                                                <div class="tw-flex tw-items-center tw-justify-between">
+                                                                    <button @click="volume > 0 ? volume-- : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                        <i class="fas fa-volume-down tw-text-xs"></i>
+                                                                    </button>
+                                                                    <span class="tw-text-xl tw-font-bold" :class="isOn ? 'tw-text-gray-800' : 'tw-text-gray-300'" x-text="volume"></span>
+                                                                    <button @click="volume < 100 ? volume++ : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                        <i class="fas fa-volume-up tw-text-xs"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Channel -->
+                                                            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-3">
+                                                                <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mb-2 tw-text-center">Channel</p>
+                                                                <div class="tw-flex tw-items-center tw-justify-between">
+                                                                    <button @click="channel > 1 ? channel-- : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                        <i class="fas fa-chevron-down tw-text-xs"></i>
+                                                                    </button>
+                                                                    <span class="tw-text-xl tw-font-bold" :class="isOn ? 'tw-text-gray-800' : 'tw-text-gray-300'" x-text="channel"></span>
+                                                                    <button @click="channel < 999 ? channel++ : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                        <i class="fas fa-chevron-up tw-text-xs"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Quick Actions -->
+                                                        <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mb-2 tw-mt-4">Navigasi</p>
+                                                        <div class="tw-flex tw-items-center tw-justify-center tw-gap-3">
+                                                            <!-- Quick Buttons Left -->
+                                                            <div class="tw-flex tw-flex-col tw-gap-2">
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-home tw-text-sm"></i>
+                                                                </button>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-arrow-left tw-text-sm"></i>
+                                                                </button>
+                                                            </div>
+
+                                                            <!-- D-Pad -->
+                                                            <div class="tw-grid tw-grid-cols-3 tw-gap-1">
+                                                                <div></div>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-chevron-up tw-text-sm"></i>
+                                                                </button>
+                                                                <div></div>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-chevron-left tw-text-sm"></i>
+                                                                </button>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-blue-200 tw-bg-blue-50 tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-blue-100 disabled:tw-opacity-40" :class="isOn ? 'tw-text-blue-500' : 'tw-text-gray-300'">
+                                                                    <span class="tw-text-[9px] tw-font-bold">OK</span>
+                                                                </button>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-chevron-right tw-text-sm"></i>
+                                                                </button>
+                                                                <div></div>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-chevron-down tw-text-sm"></i>
+                                                                </button>
+                                                                <div></div>
+                                                            </div>
+
+                                                            <!-- Quick Buttons Right -->
+                                                            <div class="tw-flex tw-flex-col tw-gap-2">
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-bars tw-text-sm"></i>
+                                                                </button>
+                                                                <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-red-500' : 'tw-text-gray-300'">
+                                                                    <i class="fas fa-volume-xmark tw-text-sm"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <!-- Generic Remote Card (for other types) -->
+                                                @include("livewire.dashboard.partials.device-card", ["device" => $device])
+                                            @endif
+                                        @empty
+                                            <div class="tw-col-span-1 lg:tw-col-span-2 tw-text-center tw-py-12">
+                                                <div class="tw-w-16 tw-h-16 tw-mx-auto tw-rounded-full tw-bg-gray-100 tw-flex tw-items-center tw-justify-center tw-mb-3">
+                                                    <i class="fas fa-gamepad tw-text-2xl tw-text-gray-300"></i>
+                                                </div>
+                                                <p class="tw-text-gray-500 tw-m-0">Belum ada perangkat Remote</p>
                                             </div>
-                                        </div>
-                                        <label class="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
-                                            <input type="checkbox" class="tw-sr-only tw-peer" x-model="isOn" />
-                                            <div class="tw-w-11 tw-h-6 tw-bg-gray-200 peer-focus:tw-outline-none tw-rounded-full tw-peer peer-checked:after:tw-translate-x-full peer-checked:after:tw-border-white after:tw-content-[''] after:tw-absolute after:tw-top-[2px] after:tw-left-[2px] after:tw-bg-white after:tw-border-gray-300 after:tw-border after:tw-rounded-full after:tw-h-5 after:tw-w-5 after:tw-transition-all peer-checked:tw-bg-blue-500"></div>
-                                        </label>
+                                        @endforelse
                                     </div>
+                                </div>
 
-                                    <!-- Temperature Display -->
-                                    <div class="tw-text-center tw-py-6 tw-bg-gray-50 tw-rounded-xl tw-mb-4">
-                                        <p class="tw-text-5xl tw-font-bold tw-m-0 tw-transition-colors" :class="isOn ? 'tw-text-gray-800' : 'tw-text-gray-300'" x-text="temp + '°C'"></p>
-                                        <p class="tw-text-sm tw-text-gray-400 tw-m-0 tw-mt-2">Suhu</p>
-                                    </div>
-
-                                    <!-- Temperature Controls -->
-                                    <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
-                                        <button @click="temp > 16 ? temp-- : null" :disabled="!isOn" class="tw-w-12 tw-h-12 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-text-xl tw-font-bold tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40 disabled:tw-cursor-not-allowed" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <div class="tw-flex tw-items-center tw-space-x-1 tw-text-gray-400 tw-text-xs">
-                                            <span>16°C</span>
-                                            <div class="tw-w-24 tw-h-1 tw-bg-gray-200 tw-rounded-full tw-mx-2">
-                                                <div class="tw-h-full tw-bg-blue-400 tw-rounded-full tw-transition-all" :style="'width: ' + ((temp - 16) / 14 * 100) + '%'"></div>
+                                <!-- CCTV Tab -->
+                                <div x-show="activeTab === 'cctv'" x-transition>
+                                    <div class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
+                                        @forelse (collect($devices)->where("tipe", "cctv") as $device)
+                                            @include("livewire.dashboard.partials.device-card", ["device" => $device])
+                                        @empty
+                                            <div class="tw-col-span-2 lg:tw-col-span-3 tw-text-center tw-py-12">
+                                                <div class="tw-w-16 tw-h-16 tw-mx-auto tw-rounded-full tw-bg-gray-100 tw-flex tw-items-center tw-justify-center tw-mb-3">
+                                                    <i class="fas fa-video tw-text-2xl tw-text-gray-300"></i>
+                                                </div>
+                                                <p class="tw-text-gray-500 tw-m-0">Belum ada CCTV</p>
                                             </div>
-                                            <span>30°C</span>
-                                        </div>
-                                        <button @click="temp < 30 ? temp++ : null" :disabled="!isOn" class="tw-w-12 tw-h-12 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-text-xl tw-font-bold tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40 disabled:tw-cursor-not-allowed" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- Mode Buttons -->
-                                    <div class="tw-grid tw-grid-cols-4 tw-gap-2">
-                                        <button @click="mode = 'cool'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'cool' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
-                                            <i class="fas fa-snowflake tw-text-lg tw-mb-1"></i>
-                                            <span class="tw-text-[10px]">Cool</span>
-                                        </button>
-                                        <button @click="mode = 'fan'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'fan' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
-                                            <i class="fas fa-fan tw-text-lg tw-mb-1"></i>
-                                            <span class="tw-text-[10px]">Fan</span>
-                                        </button>
-                                        <button @click="mode = 'dry'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'dry' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
-                                            <i class="fas fa-droplet tw-text-lg tw-mb-1"></i>
-                                            <span class="tw-text-[10px]">Dry</span>
-                                        </button>
-                                        <button @click="mode = 'auto'" :disabled="!isOn" class="tw-flex tw-flex-col tw-items-center tw-p-3 tw-rounded-xl tw-border tw-transition-all tw-duration-200" :class="mode === 'auto' && isOn ? 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-500' : 'tw-bg-white tw-border-gray-100 tw-text-gray-400'">
-                                            <i class="fas fa-rotate tw-text-lg tw-mb-1"></i>
-                                            <span class="tw-text-[10px]">Auto</span>
-                                        </button>
-                                    </div>
-
-                                    <!-- Stats -->
-                                    <div class="tw-flex tw-items-center tw-justify-center tw-space-x-4 tw-mt-4 tw-pt-4 tw-border-t tw-border-gray-100 tw-text-xs tw-text-gray-400">
-                                        <div class="tw-flex tw-items-center">
-                                            <i class="far fa-clock tw-mr-1.5"></i>
-                                            <span>2h 15m hari ini</span>
-                                        </div>
-                                        <div class="tw-flex tw-items-center">
-                                            <i class="fas fa-bolt tw-mr-1.5 tw-text-yellow-400"></i>
-                                            <span>1.8 kWh</span>
-                                        </div>
+                                        @endforelse
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- TV Remote Card -->
-                            <div class="card tw-rounded-xl tw-shadow-sm tw-shadow-gray-200 tw-border tw-border-gray-100" x-data="{ isOn: false, volume: 25, channel: 5, source: 'hdmi1' }">
-                                <div class="card-body tw-p-5 font-bagus tw-bg-white tw-rounded-xl">
-                                    <!-- Header -->
-                                    <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
-                                        <div class="tw-flex tw-items-center tw-space-x-3">
-                                            <div class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
-                                                <i class="fas fa-tv tw-text-gray-500"></i>
-                                            </div>
-                                            <div>
-                                                <p class="tw-font-semibold tw-text-gray-800 tw-m-0">TV Ruang Tamu</p>
-                                                <p class="tw-text-xs tw-text-gray-400 tw-m-0">Samsung Smart TV</p>
-                                            </div>
-                                        </div>
-                                        <label class="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
-                                            <input type="checkbox" class="tw-sr-only tw-peer" x-model="isOn" />
-                                            <div class="tw-w-11 tw-h-6 tw-bg-gray-200 peer-focus:tw-outline-none tw-rounded-full tw-peer peer-checked:after:tw-translate-x-full peer-checked:after:tw-border-white after:tw-content-[''] after:tw-absolute after:tw-top-[2px] after:tw-left-[2px] after:tw-bg-white after:tw-border-gray-300 after:tw-border after:tw-rounded-full after:tw-h-5 after:tw-w-5 after:tw-transition-all peer-checked:tw-bg-blue-500"></div>
-                                        </label>
-                                    </div>
-
-                                    <!-- Volume & Channel Controls -->
-                                    <div class="tw-grid tw-grid-cols-2 tw-gap-4 tw-mb-4">
-                                        <!-- Volume -->
-                                        <div class="tw-bg-gray-50 tw-rounded-xl tw-p-3">
-                                            <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mb-2 tw-text-center">Volume</p>
-                                            <div class="tw-flex tw-items-center tw-justify-between">
-                                                <button @click="volume > 0 ? volume-- : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                    <i class="fas fa-volume-down tw-text-xs"></i>
-                                                </button>
-                                                <span class="tw-text-xl tw-font-bold" :class="isOn ? 'tw-text-gray-800' : 'tw-text-gray-300'" x-text="volume"></span>
-                                                <button @click="volume < 100 ? volume++ : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                    <i class="fas fa-volume-up tw-text-xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Channel -->
-                                        <div class="tw-bg-gray-50 tw-rounded-xl tw-p-3">
-                                            <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mb-2 tw-text-center">Channel</p>
-                                            <div class="tw-flex tw-items-center tw-justify-between">
-                                                <button @click="channel > 1 ? channel-- : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                    <i class="fas fa-chevron-down tw-text-xs"></i>
-                                                </button>
-                                                <span class="tw-text-xl tw-font-bold" :class="isOn ? 'tw-text-gray-800' : 'tw-text-gray-300'" x-text="channel"></span>
-                                                <button @click="channel < 999 ? channel++ : null" :disabled="!isOn" class="tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                    <i class="fas fa-chevron-up tw-text-xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Quick Actions -->
-                                    <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mb-2 tw-mt-4">Navigasi</p>
-                                    <div class="tw-flex tw-items-center tw-justify-center tw-gap-3">
-                                        <!-- Quick Buttons Left -->
-                                        <div class="tw-flex tw-flex-col tw-gap-2">
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-home tw-text-sm"></i>
-                                            </button>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-arrow-left tw-text-sm"></i>
-                                            </button>
-                                        </div>
-
-                                        <!-- D-Pad -->
-                                        <div class="tw-grid tw-grid-cols-3 tw-gap-1">
-                                            <div></div>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-chevron-up tw-text-sm"></i>
-                                            </button>
-                                            <div></div>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-chevron-left tw-text-sm"></i>
-                                            </button>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-blue-200 tw-bg-blue-50 tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-blue-100 disabled:tw-opacity-40" :class="isOn ? 'tw-text-blue-500' : 'tw-text-gray-300'">
-                                                <span class="tw-text-[9px] tw-font-bold">OK</span>
-                                            </button>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-chevron-right tw-text-sm"></i>
-                                            </button>
-                                            <div></div>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-chevron-down tw-text-sm"></i>
-                                            </button>
-                                            <div></div>
-                                        </div>
-
-                                        <!-- Quick Buttons Right -->
-                                        <div class="tw-flex tw-flex-col tw-gap-2">
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-gray-600' : 'tw-text-gray-300'">
-                                                <i class="fas fa-bars tw-text-sm"></i>
-                                            </button>
-                                            <button :disabled="!isOn" class="tw-w-10 tw-h-10 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-bg-gray-50 disabled:tw-opacity-40" :class="isOn ? 'tw-text-red-500' : 'tw-text-gray-300'">
-                                                <i class="fas fa-volume-xmark tw-text-sm"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Stats -->
-                                    <div class="tw-flex tw-items-center tw-justify-center tw-space-x-4 tw-mt-4 tw-pt-4 tw-border-t tw-border-gray-100 tw-text-xs tw-text-gray-400">
-                                        <div class="tw-flex tw-items-center">
-                                            <i class="far fa-clock tw-mr-1.5"></i>
-                                            <span>3h 45m hari ini</span>
-                                        </div>
-                                        <div class="tw-flex tw-items-center">
-                                            <i class="fas fa-bolt tw-mr-1.5 tw-text-yellow-400"></i>
-                                            <span>0.5 kWh</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h3 class="tw-text-base">Perangkat Terhubung</h3>
-                        <div class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 tw-mt-4 tw-gap-4">
-                            <!-- Lamp Cards -->
-                            @for ($i = 1; $i <= 4; $i++)
-                                <div class="card tw-rounded-xl tw-shadow-sm tw-shadow-gray-200 tw-border tw-border-gray-100 hover:tw-shadow-md tw-transition-shadow tw-duration-200">
-                                    <div class="card-body tw-rounded-xl tw-px-4 lg:tw-px-4 tw-text-center font-bagus tw-bg-gradient-to-br tw-from-white tw-to-slate-50">
-                                        <div class="tw-flex tw-items-center" x-data="{ isOn: false }">
-                                            <span class="tw-text-xs tw-font-medium tw-px-2 tw-py-0.5 tw-rounded-full" :class="isOn ? 'tw-bg-green-100 tw-text-green-600' : 'tw-bg-gray-100 tw-text-gray-500'" x-text="isOn ? 'ON' : 'OFF'"></span>
-                                            <label class="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer tw-ml-auto">
-                                                <input type="checkbox" class="tw-sr-only tw-peer" x-model="isOn" />
-                                                <div class="tw-w-9 tw-h-5 tw-bg-gray-200 peer-focus:tw-outline-none tw-rounded-full tw-peer peer-checked:after:tw-translate-x-full peer-checked:after:tw-border-white after:tw-content-[''] after:tw-absolute after:tw-top-[2px] after:tw-left-[2px] after:tw-bg-white after:tw-border-gray-300 after:tw-border after:tw-rounded-full after:tw-h-4 after:tw-w-4 after:tw-transition-all peer-checked:tw-bg-blue-500"></div>
-                                            </label>
-                                        </div>
-                                        <div class="tw-space-y-2 tw-my-3">
-                                            <div class="tw-w-14 tw-h-14 tw-mx-auto tw-rounded-full tw-bg-amber-50 tw-flex tw-items-center tw-justify-center">
-                                                <i class="fas fa-lightbulb tw-text-2xl tw-text-amber-400"></i>
-                                            </div>
-                                            <p class="tw-font-medium tw-text-gray-700 tw-m-0">Lampu {{ $i }}</p>
-                                            <div class="tw-flex tw-items-center tw-justify-center tw-space-x-3 tw-mt-3 tw-text-xs">
-                                                <div class="tw-flex tw-items-center tw-text-gray-400" title="Waktu Pemakaian Hari Ini">
-                                                    <i class="far fa-clock tw-mr-1"></i>
-                                                    <span>5h 23m</span>
-                                                </div>
-                                                <div class="tw-flex tw-items-center tw-text-gray-400" title="Penggunaan Listrik Hari Ini">
-                                                    <i class="fas fa-bolt tw-mr-1 tw-text-yellow-400"></i>
-                                                    <span>3.2 kWh</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endfor
                         </div>
                     </div>
                 </div>
@@ -391,7 +468,7 @@
                 </div>
                 <div class="modal-body tw-px-4 lg:tw-px-6 tw-pt-0">
                     <!-- Nav Pills Tabs -->
-                    <ul class="nav nav-pills tw-my-3 tw-bg-gray-100 tw-p-1 tw-rounded-lg" id="ruanganTabs" role="tablist">
+                    <ul class="nav nav-pills tw-my-3 tw-bg-gray-100 tw-p-1 tw-rounded-lg" id="ruanganTabs" role="tablist" wire:ignore.self>
                         <li class="nav-item tw-flex-1">
                             <a class="nav-link tw-text-center tw-rounded-md {{ ! $isEditing ? "active" : "" }}" id="list-tab" data-toggle="pill" href="#listRuangan" role="tab">
                                 <i class="far fa-list tw-mr-1"></i>
@@ -401,13 +478,13 @@
                         <li class="nav-item tw-flex-1">
                             <a class="nav-link tw-text-center tw-rounded-md {{ $isEditing ? "active" : "" }}" id="form-tab" data-toggle="pill" href="#formRuangan" role="tab">
                                 <i class="far fa-{{ $isEditing ? "edit" : "plus" }} tw-mr-1"></i>
-                                {{ $isEditing ? "Edit Ruangan" : "Tambah" }}
+                                {{ $isEditing ? "Edit Ruangan" : "Tambah Ruangan" }}
                             </a>
                         </li>
                     </ul>
 
                     <!-- Tab Contents -->
-                    <div class="tab-content" id="ruanganTabsContent">
+                    <div class="tab-content" id="ruanganTabsContent" wire:ignore.self>
                         <!-- List Tab -->
                         <div class="tab-pane fade {{ ! $isEditing ? "show active" : "" }}" id="listRuangan" role="tabpanel">
                             <div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3 tw-max-h-auto tw-overflow-y-auto tw-pr-1">
@@ -493,31 +570,233 @@
     <div class="modal fade" wire:ignore.self id="formDeviceModal" aria-labelledby="formDeviceModalLabel" aria-hidden="true">
         <div class="modal-dialog tw-w-full tw-m-0 sm:tw-w-auto sm:tw-m-[1.75rem_auto]">
             <div class="modal-content tw-rounded-none lg:tw-rounded-md">
-                <div class="modal-header tw-px-4 lg:tw-px-6">
+                <div class="modal-header">
                     <h5 class="modal-title" id="formDeviceModalLabel">
-                        {{ $isEditing ? "Edit Data" : "Add Data" }}
+                        {{ $isEditingDevice ? "Edit Device" : "Tambah Device" }}
                     </h5>
-                    <button type="button" wire:click="cancel()" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" wire:click="cancelDevice()" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <form>
-                    <div class="modal-body tw-px-4 lg:tw-px-6">
-                        <div class="form-group">
-                            <label for="nama_perangkat">Nama Perangkat</label>
-                            <input type="text" wire:model="nama_perangkat" id="nama_perangkat" class="form-control" />
+                    <div class="modal-body">
+                        <!-- Ruang -->
+                        <div class="form-group" wire:ignore>
+                            <label>Ruang</label>
+                            <select id="selectRuang" class="form-control" style="width: 100%">
+                                @foreach ($data as $ruang)
+                                    <option value="{{ $ruang->id }}" {{ $selectedRoomId == $ruang->id ? "selected" : "" }}>{{ $ruang->nama_ruang }}</option>
+                                @endforeach
+                            </select>
                         </div>
+
+                        <!-- Nama Device -->
                         <div class="form-group">
-                            <label for="topic">topic</label>
-                            <textarea wire:model="topic" id="topic" class="form-control" style="height: 100px !important"></textarea>
+                            <label for="nama_device">Nama Device</label>
+                            <input type="text" wire:model="nama_device" id="nama_device" class="form-control" placeholder="Contoh: Lampu Ruang Tamu..." />
+                            @error("nama_device")
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
+
+                        <!-- Tipe Device -->
+                        <div class="form-group">
+                            <label>Tipe Device</label>
+                            <select wire:model.live="tipe_device" class="form-control" {{ $isEditingDevice ? "disabled" : "" }}>
+                                <option value="onoff">ON/OFF</option>
+                                <option value="remote">Remote</option>
+                                <option value="cctv">CCTV</option>
+                            </select>
+                            @if ($isEditingDevice)
+                                <small class="text-muted">Tipe device tidak dapat diubah saat edit</small>
+                            @endif
+                        </div>
+
+                        <!-- Remote Type (only shown when tipe = remote) -->
+                        @if ($tipe_device === "remote")
+                            <div class="form-group">
+                                <label>Tipe Remote</label>
+                                <select wire:model="remote_type" class="form-control">
+                                    <option value="">-- Pilih Tipe Remote --</option>
+                                    <option value="ac">🌡️ AC (Air Conditioner)</option>
+                                    <option value="tv">📺 TV (Televisi)</option>
+                                </select>
+                                @error("remote_type")
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        @endif
+
+                        <!-- Icon Device -->
+                        <div class="form-group">
+                            <label>Icon</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 45px; justify-content: center">
+                                        <i class="{{ $icon_device ?: "fas fa-plug" }}"></i>
+                                    </span>
+                                </div>
+                                <select wire:model.live="icon_device" class="form-control">
+                                    <option value="">-- Pilih Icon --</option>
+                                    <optgroup label="Lampu & Listrik">
+                                        <option value="fas fa-lightbulb">💡 Lampu</option>
+                                        <option value="fas fa-plug">🔌 Colokan</option>
+                                        <option value="fas fa-bolt">⚡ Listrik</option>
+                                        <option value="fas fa-charging-station">🔋 Charging</option>
+                                    </optgroup>
+                                    <optgroup label="AC & Kipas">
+                                        <option value="fas fa-fan">🌀 Kipas</option>
+                                        <option value="fas fa-snowflake">❄️ AC</option>
+                                        <option value="fas fa-temperature-low">🌡️ Suhu</option>
+                                        <option value="fas fa-wind">💨 Angin</option>
+                                    </optgroup>
+                                    <optgroup label="Hiburan">
+                                        <option value="fas fa-tv">📺 TV</option>
+                                        <option value="fas fa-volume-up">🔊 Speaker</option>
+                                        <option value="fas fa-gamepad">🎮 Remote</option>
+                                        <option value="fas fa-music">🎵 Musik</option>
+                                    </optgroup>
+                                    <optgroup label="Keamanan">
+                                        <option value="fas fa-video">📹 Kamera</option>
+                                        <option value="fas fa-door-open">🚪 Pintu</option>
+                                        <option value="fas fa-lock">🔒 Kunci</option>
+                                        <option value="fas fa-bell">🔔 Bel</option>
+                                    </optgroup>
+                                    <optgroup label="Lainnya">
+                                        <option value="fas fa-water">💧 Air</option>
+                                        <option value="fas fa-fire">🔥 Api</option>
+                                        <option value="fas fa-wifi">📶 WiFi</option>
+                                        <option value="fas fa-cog">⚙️ Umum</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- ON/OFF Fields -->
+                        @if ($tipe_device === "onoff")
+                            <fieldset class="border rounded p-3 mb-3">
+                                <legend class="w-auto px-2 mb-0" style="font-size: 14px; font-weight: 600">Konfigurasi Power</legend>
+                                <div class="form-group">
+                                    <label>MQTT Topic</label>
+                                    <input type="text" wire:model="power_topic" class="form-control" placeholder="home/lampu/switch" />
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <label>Payload ON</label>
+                                            <input type="text" wire:model="power_payload_on" class="form-control" placeholder="ON" />
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <label>Payload OFF</label>
+                                            <input type="text" wire:model="power_payload_off" class="form-control" placeholder="OFF" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" wire:model="power_retain" class="form-check-input" id="power_retain" />
+                                    <label class="form-check-label" for="power_retain">Retain message</label>
+                                </div>
+                            </fieldset>
+                        @endif
+
+                        <!-- Remote Fields -->
+                        @if ($tipe_device === "remote")
+                            <fieldset class="border rounded p-3 mb-3">
+                                <legend class="w-auto px-2 mb-0" style="font-size: 14px; font-weight: 600">Konfigurasi Remote</legend>
+                                <div class="form-group mb-0">
+                                    <label>MQTT Topic</label>
+                                    <input type="text" wire:model="remote_topic" class="form-control" placeholder="home/ac/control" />
+                                    <small class="text-muted">Tombol-tombol remote dapat diatur setelah device dibuat</small>
+                                </div>
+                            </fieldset>
+                        @endif
+
+                        <!-- kWh Monitoring -->
+                        <fieldset class="border rounded p-3">
+                            <legend class="w-auto px-2 mb-0" style="font-size: 14px; font-weight: 600">Monitoring</legend>
+                            <div class="form-check">
+                                <input type="checkbox" wire:model.live="kwh_enabled" class="form-check-input" id="kwh_enabled" />
+                                <label class="form-check-label" for="kwh_enabled">Aktifkan kWh Monitoring</label>
+                            </div>
+                            @if ($kwh_enabled)
+                                <div class="form-group mt-3 mb-0">
+                                    <label>MQTT Topic kWh</label>
+                                    <input type="text" wire:model="kwh_topic" class="form-control" placeholder="home/lampu/kwh" />
+                                </div>
+                            @endif
+                        </fieldset>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" wire:click="cancel()" class="btn btn-secondary tw-bg-gray-300" data-dismiss="modal">Close</button>
-                        <button type="submit" wire:click.prevent="{{ $isEditing ? "update()" : "store()" }}" wire:loading.attr="disabled" class="btn btn-primary tw-bg-blue-500">Save Data</button>
+                        <button type="button" wire:click="cancelDevice()" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" wire:click.prevent="{{ $isEditingDevice ? "updateDevice()" : "storeDevice()" }}" wire:loading.attr="disabled" class="btn btn-primary">
+                            <span wire:loading.remove>{{ $isEditingDevice ? "Simpan Perubahan" : "Tambah Device" }}</span>
+                            <span wire:loading>Menyimpan...</span>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+@push("general-css")
+    <link rel="stylesheet" href="{{ asset("assets/midragon/select2/select2.min.css") }}" />
+@endpush
+
+@push("scripts")
+    <script src="{{ asset("assets/midragon/select2/select2.full.min.js") }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Variables to store active tab state
+            let activeDeviceTab = 'power-tab';
+            let activeRuanganTab = 'list-tab';
+
+            // Save tab state when tab is clicked
+            $('button[data-toggle="pill"]').on('shown.bs.tab', function(e) {
+                activeDeviceTab = e.target.id;
+            });
+
+            $('a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
+                activeRuanganTab = e.target.id;
+            });
+
+            // Restore tab state after Livewire updates
+            Livewire.hook('message.processed', (message, component) => {
+                // Restore device tabs
+                if (activeDeviceTab && document.getElementById(activeDeviceTab)) {
+                    setTimeout(() => {
+                        $('#' + activeDeviceTab).tab('show');
+                    }, 50);
+                }
+
+                // Restore ruangan tabs (only when modal is open)
+                if ($('#ruangModal').hasClass('show') && activeRuanganTab && document.getElementById(activeRuanganTab)) {
+                    setTimeout(() => {
+                        $('#' + activeRuanganTab).tab('show');
+                    }, 50);
+                }
+            });
+
+            // Init Select2 when modal opens
+            $('#formDeviceModal').on('shown.bs.modal', function() {
+                $('#selectRuang').select2({
+                    dropdownParent: $('#formDeviceModal'),
+                    placeholder: 'Pilih Ruang',
+                    width: '100%'
+                });
+            });
+
+            // Update Livewire when Select2 changes
+            $('#selectRuang').on('change', function() {
+                @this.set('selectedRoomId', $(this).val());
+            });
+
+            // Destroy Select2 when modal closes
+            $('#formDeviceModal').on('hidden.bs.modal', function() {
+                $('#selectRuang').select2('destroy');
+            });
+        });
+    </script>
+@endpush
