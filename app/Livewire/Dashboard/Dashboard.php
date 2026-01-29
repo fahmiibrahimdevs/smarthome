@@ -3,7 +3,7 @@
 namespace App\Livewire\Dashboard;
 
 use App\Models\User;
-use App\Models\Ruang;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
@@ -27,11 +27,11 @@ class Dashboard extends Component
     public $isEditing = false;
     public $selectedRoomId = null;
 
-    public $dataId, $nama_ruang, $deskripsi;
+    public $dataId, $nama_ruang;
 
     public function mount()
     {
-        $firstRoom = Ruang::first();
+        $firstRoom = DB::table('ruang')->first();
         if ($firstRoom) {
             $this->selectedRoomId = $firstRoom->id;
         }
@@ -49,7 +49,9 @@ class Dashboard extends Component
         $this->searchResetPage();
         $search = '%' . $this->searchTerm . '%';
 
-        $data = Ruang::where('nama_ruang', 'LIKE', $search)
+        $data = DB::table('ruang')
+            ->select('ruang.*', DB::raw('0 as device_count'))
+            ->where('nama_ruang', 'LIKE', $search)
             ->paginate($this->lengthData);
 
         if ($user->hasRole('admin')) {
@@ -78,11 +80,12 @@ class Dashboard extends Component
     private function resetInputFields()
     {
         $this->nama_ruang = '';
-        $this->deskripsi = '';
     }
 
     public function cancel()
     {
+        $this->isEditing = false;
+        $this->dataId = null;
         $this->resetInputFields();
     }
 
@@ -90,9 +93,8 @@ class Dashboard extends Component
     {
         $this->validate();
 
-        Ruang::create([
-            'nama_ruang'     => $this->nama_ruang,
-            'deskripsi'      => $this->deskripsi,
+        DB::table('ruang')->insert([
+            'nama_ruang' => $this->nama_ruang,
         ]);
 
         $this->dispatchAlert('success', 'Success!', 'Data created successfully.');
@@ -101,10 +103,10 @@ class Dashboard extends Component
     public function edit($id)
     {
         $this->isEditing = true;
-        $data = Ruang::findOrFail($id);
+        $data = DB::table('ruang')->where('id', $id)->first();
+        if (!$data) abort(404);
         $this->dataId = $id;
-        $this->nama_ruang  = $data->nama_ruang;
-        $this->deskripsi  = $data->deskripsi;
+        $this->nama_ruang = $data->nama_ruang;
     }
 
     public function update()
@@ -112,12 +114,12 @@ class Dashboard extends Component
         $this->validate();
 
         if ($this->dataId) {
-            Ruang::findOrFail($this->dataId)->update([
+            DB::table('ruang')->where('id', $this->dataId)->update([
                 'nama_ruang' => $this->nama_ruang,
-                'deskripsi' => $this->deskripsi,
             ]);
 
             $this->dispatchAlert('success', 'Success!', 'Data updated successfully.');
+            $this->isEditing = false;
             $this->dataId = null;
         }
     }
@@ -134,7 +136,7 @@ class Dashboard extends Component
 
     public function delete()
     {
-        Ruang::findOrFail($this->dataId)->delete();
+        DB::table('ruang')->where('id', $this->dataId)->delete();
         $this->dispatchAlert('success', 'Success!', 'Data deleted successfully.');
     }
 

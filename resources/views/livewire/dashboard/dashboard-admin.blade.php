@@ -124,7 +124,7 @@
                     <div class="tw-flex tw-space-x-2.5 tw-w-auto no-scrollbar tw-overflow-x-auto tw-whitespace-nowrap tw-px-4 lg:tw-px-0 tw-pb-2">
                         <button class="btn btn-transparent tw-border-2 tw-border-gray-300 tw-border-dashed font-bagus tw-text-gray-500 tw-px-4 tw-py-1.5 tw-rounded-xl" data-toggle="modal" data-target="#formRuanganModal">
                             <i class="fas fa-plus mx-2"></i>
-                            <span class="tw-mr-2">Add Room</span>
+                            <span class="tw-mr-2">Kelola Ruangan</span>
                         </button>
                         @foreach ($data as $item)
                             <button wire:click="selectRoom({{ $item->id }})" class="tw-group btn tw-px-5 tw-py-3 tw-rounded-xl tw-shadow-sm hover:tw-shadow-md tw-transition-all tw-duration-200 tw-flex tw-items-center tw-border {{ $selectedRoomId == $item->id ? "btn-primary tw-text-white" : "tw-bg-white hover:tw-bg-gray-50 tw-text-gray-500 tw-border-gray-100 hover:tw-border-blue-200" }}">
@@ -378,32 +378,114 @@
     </section>
 
     <div class="modal fade" wire:ignore.self id="formRuanganModal" aria-labelledby="formRuanganModalLabel" aria-hidden="true">
-        <div class="modal-dialog tw-w-full tw-m-0 sm:tw-w-auto sm:tw-m-[1.75rem_auto]">
+        <div class="modal-dialog modal-lg tw-w-full tw-m-0 sm:tw-w-auto sm:tw-m-[1.75rem_auto]">
             <div class="modal-content tw-rounded-none lg:tw-rounded-md">
-                <div class="modal-header tw-px-4 lg:tw-px-6">
-                    <h5 class="modal-title" id="formRuanganModalLabel">
-                        {{ $isEditing ? "Edit Data" : "Add Data" }}
+                <div class="modal-header tw-px-4 lg:tw-px-6 tw-border-b-0">
+                    <h5 class="modal-title tw-font-semibold" id="formRuanganModalLabel">
+                        <i class="far fa-door-open tw-mr-2 tw-text-blue-500"></i>
+                        Kelola Ruangan
                     </h5>
                     <button type="button" wire:click="cancel()" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form>
-                    <div class="modal-body tw-px-4 lg:tw-px-6">
-                        <div class="form-group">
-                            <label for="nama_ruang">Nama Ruangan</label>
-                            <input type="text" wire:model="nama_ruang" id="nama_ruang" class="form-control" />
+                <div class="modal-body tw-px-4 lg:tw-px-6 tw-pt-0">
+                    <!-- Nav Pills Tabs -->
+                    <ul class="nav nav-pills tw-my-3 tw-bg-gray-100 tw-p-1 tw-rounded-lg" id="ruanganTabs" role="tablist">
+                        <li class="nav-item tw-flex-1">
+                            <a class="nav-link tw-text-center tw-rounded-md {{ ! $isEditing ? "active" : "" }}" id="list-tab" data-toggle="pill" href="#listRuangan" role="tab">
+                                <i class="far fa-list tw-mr-1"></i>
+                                Daftar Ruangan
+                            </a>
+                        </li>
+                        <li class="nav-item tw-flex-1">
+                            <a class="nav-link tw-text-center tw-rounded-md {{ $isEditing ? "active" : "" }}" id="form-tab" data-toggle="pill" href="#formRuangan" role="tab">
+                                <i class="far fa-{{ $isEditing ? "edit" : "plus" }} tw-mr-1"></i>
+                                {{ $isEditing ? "Edit Ruangan" : "Tambah" }}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Contents -->
+                    <div class="tab-content" id="ruanganTabsContent">
+                        <!-- List Tab -->
+                        <div class="tab-pane fade {{ ! $isEditing ? "show active" : "" }}" id="listRuangan" role="tabpanel">
+                            <div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3 tw-max-h-auto tw-overflow-y-auto tw-pr-1">
+                                @forelse ($data as $item)
+                                    <div class="tw-bg-white tw-border tw-border-gray-200 tw-rounded-xl tw-p-4 tw-shadow-sm hover:tw-shadow-md tw-transition-all tw-duration-200">
+                                        <div class="tw-flex tw-items-start tw-justify-between">
+                                            <div class="tw-flex tw-items-center tw-space-x-3">
+                                                <div class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-blue-100 tw-flex tw-items-center tw-justify-center">
+                                                    <i class="far fa-home tw-text-blue-500"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="tw-font-semibold tw-text-gray-800 tw-m-0">{{ $item->nama_ruang }}</p>
+                                                    <p class="tw-text-xs tw-text-gray-400 tw-m-0 tw-mt-0.5">
+                                                        <i class="far fa-microchip tw-mr-1"></i>
+                                                        {{ $item->device_count ?? 0 }} Perangkat
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="tw-flex tw-items-center tw-space-x-1">
+                                                <button wire:click="edit({{ $item->id }})" class="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-amber-50 tw-text-amber-500 tw-flex tw-items-center tw-justify-center hover:tw-bg-amber-100 tw-transition-colors tw-border-0">
+                                                    <i class="far fa-edit tw-text-sm"></i>
+                                                </button>
+                                                <button wire:click="deleteConfirm({{ $item->id }})" class="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-red-50 tw-text-red-500 tw-flex tw-items-center tw-justify-center hover:tw-bg-red-100 tw-transition-colors tw-border-0">
+                                                    <i class="far fa-trash tw-text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="tw-col-span-2 tw-text-center tw-py-8">
+                                        <div class="tw-w-16 tw-h-16 tw-mx-auto tw-rounded-full tw-bg-gray-100 tw-flex tw-items-center tw-justify-center tw-mb-3">
+                                            <i class="far fa-inbox tw-text-2xl tw-text-gray-400"></i>
+                                        </div>
+                                        <p class="tw-text-gray-500 tw-m-0">Belum ada ruangan</p>
+                                        <p class="tw-text-xs tw-text-gray-400 tw-m-0">Klik tab "Tambah Ruangan" untuk menambahkan</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                            @if ($data->hasPages())
+                                <div class="tw-mt-4 tw-pt-3 tw-border-t tw-border-gray-100">
+                                    {{ $data->links() }}
+                                </div>
+                            @endif
                         </div>
-                        <div class="form-group">
-                            <label for="deskripsi">Deskripsi</label>
-                            <textarea wire:model="deskripsi" id="deskripsi" class="form-control" style="height: 100px !important"></textarea>
+
+                        <!-- Form Tab -->
+                        <div class="tab-pane fade {{ $isEditing ? "show active" : "" }}" id="formRuangan" role="tabpanel">
+                            <form>
+                                <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4">
+                                    <div class="form-group tw-mb-0">
+                                        <label for="nama_ruang" class="tw-text-sm tw-font-medium tw-text-gray-700">
+                                            <i class="far fa-tag tw-mr-1 tw-text-blue-500"></i>
+                                            Nama Ruangan
+                                        </label>
+                                        <input type="text" wire:model="nama_ruang" id="nama_ruang" class="form-control tw-rounded-lg tw-border-gray-200 focus:tw-border-blue-400 focus:tw-ring focus:tw-ring-blue-200 focus:tw-ring-opacity-50" placeholder="Contoh: Ruang Tamu, Kamar Tidur..." />
+                                        @error("nama_ruang")
+                                            <small class="tw-text-red-500">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="tw-flex tw-justify-end tw-space-x-2 tw-mt-4">
+                                    @if ($isEditing)
+                                        <button type="button" wire:click="cancel()" class="btn tw-bg-gray-100 tw-text-gray-600 tw-rounded-lg tw-px-4 hover:tw-bg-gray-200 tw-transition-colors">
+                                            <i class="far fa-times tw-mr-1"></i>
+                                            Batal
+                                        </button>
+                                    @endif
+
+                                    <button type="submit" wire:click.prevent="{{ $isEditing ? "update()" : "store()" }}" wire:loading.attr="disabled" class="btn btn-primary tw-bg-blue-500 tw-rounded-lg tw-px-4 hover:tw-bg-blue-600 tw-transition-colors">
+                                        <i class="far fa-{{ $isEditing ? "save" : "plus" }} tw-mr-1"></i>
+                                        <span wire:loading.remove>{{ $isEditing ? "Simpan Perubahan" : "Tambah Ruangan" }}</span>
+                                        <span wire:loading>Menyimpan...</span>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" wire:click="cancel()" class="btn btn-secondary tw-bg-gray-300" data-dismiss="modal">Close</button>
-                        <button type="submit" wire:click.prevent="{{ $isEditing ? "update()" : "store()" }}" wire:loading.attr="disabled" class="btn btn-primary tw-bg-blue-500">Save Data</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
